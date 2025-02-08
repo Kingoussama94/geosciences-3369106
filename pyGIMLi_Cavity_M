@@ -1,0 +1,28 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import pygimli as pg 
+import pygimli.meshtools as mt
+from pygimli.physics import ert world = mt.createWorld(start=[-48, 0], end=[48, -20], worldMarker=True) 
+block = mt.createCircle(pos=[-30, -10.], radius=[4, 4], marker=2, boundaryMarker=10, area=0.1) 
+blockc = mt.createCircle(pos=[30, -10.], radius=[4, 4], marker=3, boundaryMarker=10, area=0.1) 
+geom = mt.mergePLC([world, block , blockc]) 
+pg.show(geom)
+
+scheme = ert.createData(elecs=np.linspace(start=-48, stop=48, num=48), schemeName='dd') 
+for p in scheme.sensors(): 
+geom.createNode(p) 
+geom.createNode(p - [0, 0.1]) mesh = mt.createMesh(geom, quality=35.5) 
+rhomap = [[1, 50.], [2, 10.], [3, 100.],] 
+pg.show(mesh, data=rhomap, label=pg.unit('res'), showMesh=True) 
+data = ert.simulate(mesh, scheme=scheme, res=rhomap, noiseLevel=1, noiseAbs=1e-6, seed=1337)
+
+pg.info(np.linalg.norm(data['err']), np.linalg.norm(data['rhoa'])) 
+pg.info('Simulated data', data)
+pg.info('The data contains:', data.dataMap().keys())
+
+pg.info('Simulated rhoa (min/max)', min(data['rhoa']), max(data['rhoa'])) 
+pg.info('Selected data noise %(min/max)', min(data['err'])*100, max(data['err'])*100) 
+pg.show(data) data.remove(data['rhoa'] < 0) pg.info('Filtered rhoa (min/max)', min(data['rhoa']), max(data['rhoa']))
+data.save('simple.dat') 
+ert.show(data) mgr.showResult(cMin=15, cMax=100, xlabel="x (m)", ylabel="z (m)"); 
+mgr.showFit()
